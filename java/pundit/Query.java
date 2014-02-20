@@ -4,8 +4,6 @@ import clojure.lang.*;
 import java.util.*;
 
 public class Query implements Seqable {
-  private static Keyword limitKey = Keyword.intern(null, "limit");
-
   private String parseClass;
   private IFn loader;
   private IPersistentVector auth;
