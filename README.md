@@ -44,9 +44,8 @@ user=> (pa/delete "Klass" "ZwyZBrgKgU")
 
 ### Overview
 
-The `pundit.api/query` function returns a seqable query object, which represents a
-query that has not been executed yet. It is immutable, but it is possible to
-generate modified query objects out of it.
+The `pundit.api/query` function returns a *seqable*, immutable query object that
+represents a pending query.
 
 ```clojure
 user=> (require '[pundit.query :refer :all])
@@ -74,7 +73,7 @@ user=> (pa/find-one "Klass" :where {:foo 123} :include :baz)
 ### Notes on composing where queries
 
 When adding to a query, a `:where` clause with an exact match will always
-overwrite comparisons, because it makes them obsolete. Otherwise they will be
+overwrite comparisons because it makes them obsolete. Otherwise they will be
 composed as *AND*.
 
 ```clojure
@@ -89,16 +88,17 @@ user=> (where (pa/query "Klass" :where {:foo {:$gt 100}}) {:foo 333})
 ```
 
 This can lead to some unexpected results, but currently there is no way in the
-PARSE API to mix exact queries with comparisons. There is no `$eq`.
+PARSE API to mix exact queries with comparisons on the same key. There is no
+`$eq`.
 
 ### Automatic paging
 
 Queries returning many objects will be requested in paged windows
-automatically. Users will see one continuous lazy sequence, which they can use
-as any other sequence in Clojure.
+automatically. You get continuous lazy sequences that you can use
+like any other sequence in Clojure.
 
-Always use the `:limit` clause if you don't want this behaviour, do not rely on
-limits imposed by the Parse API!
+Always use the `:limit` clause if you don't want all the results, do not rely
+on limits imposed by the Parse API!
 
 ### Counting
 
@@ -131,7 +131,7 @@ user=> (:category obj)
 "2014-02-19T17:05:24.640Z", :created-at "2014-02-19T16:33:23.457Z"}
 ```
 
-To generate pointers out of objects, IDS, sequences of objects and IDs for
+To generate pointers out of objects, IDs, sequences of objects and IDs for
 querying or updating, you can use the following functions:
 
 ```clojure
