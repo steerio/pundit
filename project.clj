@@ -1,4 +1,4 @@
-(defproject pundit "0.0.1-SNAPSHOT"
+(defproject pundit "0.1.0"
   :description "A REST client for Parse.com in Clojure"
   :url "http://github.com/steerio/pundit"
   :java-source-paths ["java"]
