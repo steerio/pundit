@@ -110,6 +110,11 @@
   (first
     (load-query klass *auth* (assoc q :limit 1))))
 
+(defn find-all
+  "Shorthand function to eagerly retrieve ALL hits of a query."
+  [klass & {:as q}]
+  (seq (load-query klass *auth* q)))
+
 (defn- remote-count* [klass q]
   (->> (merge q {:count 1 :limit 0})
        (GET ["classes" klass] *auth*)
