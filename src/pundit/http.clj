@@ -39,17 +39,13 @@
 (defmulti ^:private to-query type)
 
 (defmethod to-query Sequential [value]
-  (s/join \,
-          (map
-            #(order-camelize
-               (if (keyword? %) (name %) %))
-            value)))
+  (s/join \, (map to-query value)))
 
 (defmethod to-query Associative [value]
   (to-json value))
 
 (defmethod to-query Keyword [value]
-  (name value))
+  (order-camelize (name value)))
 
 (defmethod to-query :default [value]
   value)
