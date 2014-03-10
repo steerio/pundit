@@ -42,7 +42,7 @@ public class Query implements Seqable {
   }
 
   public ISeq seq() {
-    return (ISeq) loader.invoke(parseClass, auth, query);
+    return ((ISeq) loader.invoke(parseClass, auth, query)).seq();
   }
 
   public String toString() {
