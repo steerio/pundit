@@ -24,14 +24,15 @@ You can choose between "permanent" authentication and an auth binding:
 
 ```clojure
 user=> (pa/create "Klass" {:foo 123 :bar "Hello"})
-{:bar "Hello", :foo 123, :created-at "2014-02-19T17:42:12.947Z", :object-id
-"ZwyZBrgKgU", :updated-at "2014-02-19T17:42:12.947Z", :class-name "Klass"}
+{:bar "Hello", :foo 123, :created-at #<DateTime 2014-02-19T17:42:12.947Z>,
+:object-id "ZwyZBrgKgU", :updated-at #<DateTime 2014-02-19T17:42:12.947Z>,
+:class-name "Klass"}
 
 user=> (pa/update obj {:bar "Namaste"})
-{:updated-at "2014-02-19T17:43:07.221Z"}
+{:updated-at #<DateTime 2014-02-19T17:43:07.221Z>}
 
 user=> (pa/update "Klass" "ZwyZBrgKgU" {:bar "Namaste"})
-{:updated-at "2014-02-19T17:44:22.453Z"}
+{:updated-at #<DateTime 2014-02-19T17:44:22.453Z>}
 
 user=> (pa/delete obj)
 {}
@@ -64,10 +65,10 @@ user=> (include *1 :another)
 #<Query Klass {:include [:baz :another], :where {:bar "Hello", :foo 123}}>
 
 user=> (seq *1)
-({:object-id "bgQwXqBtEu", :updated-at "2014-02-18T20:49:42.559Z", ..... })
+({:object-id "bgQwXqBtEu", :updated-at #<DateTime 2014-02-18T20:49:42.559Z>, ..... })
 
 user=> (pa/find-one "Klass" :where {:foo 123} :include :baz)
-{:object-id "bgQwXqBtEu", :updated-at "2014-02-18T20:49:42.559Z", ..... }
+{:object-id "bgQwXqBtEu", :updated-at #<DateTime 2014-02-18T20:49:42.559Z>, ..... }
 ```
 
 ### Notes on composing where queries
@@ -128,26 +129,15 @@ user=> (:name (:category obj)) ; Second HTTP request happens here
 
 user=> (:category obj)
 {:object-id "zAi04Yu41O", :class-name "Category", :name "Things", :updated-at
-"2014-02-19T17:05:24.640Z", :created-at "2014-02-19T16:33:23.457Z"}
+#<DateTime 2014-02-19T17:05:24.640Z>, :created-at #<DateTime
+2014-02-19T16:33:23.457Z>}
 ```
 
-To generate pointers out of objects, IDs, sequences of objects and IDs for
-querying or updating, you can use the following functions:
+Writing objects with pointer fields does not require explicitly creating
+pointers. You can simply use a Parse object as the value.
 
 ```clojure
-user=> (pa/ptr obj)
-{:__type "Pointer", :class-name "Klass", :object-id "bgQwXqBtEu"}
-
-user=> (pa/ptr "OtherKlass" "Tp0ULkm8j1")
-{:__type "Pointer", :class-name "OtherKlass", :object-id "Tp0ULkm8j1"}
-
-user=> (pa/ptrs (list obj other-obj))
-({:__type "Pointer", :class-name "Klass", :object-id "bgQwXqBtEu"}
-{:__type "Pointer", :class-name "OtherKlass", :object-id "Tp0ULkm8j1"})
-
-user=> (pa/ptrs "Klass" (list id other-id))
-({:__type "Pointer", :class-name "Klass", :object-id "xAvwwBjCf0"}
-{:__type "Pointer", :class-name "Klass", :object-id "iNXDFjYdre"})
+(pa/update obj {:foo (pa/retrieve "Klass" "bgQwXqBtEu")})
 ```
 
 ## Calling cloud functions
