@@ -1,5 +1,6 @@
 (ns pundit.api
   (:require [delayed-map.core :refer :all]
+            [clj-time.format :as tf]
             [pundit.string :refer :all]
             [pundit.http :refer :all])
   (:import (clojure.lang IPersistentMap) (pundit Query)))
@@ -26,19 +27,43 @@
 
 ; Value transformation
 
-(defn- value->obj [value]
+(defmulti ^:private transform-map :__type)
+
+(defn- transform-value [value]
   (cond
-    (map? value) (case (:__type value)
-                   "Pointer" (delayed-ptr value)
-                   value)
-    (sequential? value) (mapv value->obj value)
+    (map? value) (transform-map value)
+    (sequential? value) (mapv transform-value value)
     :default value))
 
-(defn- result->obj [klass m]
-  (reduce
-    (fn [acc [k v]] (assoc acc k (value->obj v)))
-    {:class-name klass}
-    m))
+(defn- transform-object
+  ([raw]
+   (reduce
+     (fn [acc [k v]] (assoc acc k (transform-value v)))
+     (reduce
+       (fn [acc k]
+         (if-let [v (get acc k)]
+           (assoc acc k (tf/parse v))
+           acc))
+       (select-keys raw [:object-id :class-name :created-at :updated-at])
+       [:created-at :updated-at])
+     (dissoc raw :object-id :class-name :created-at :updated-at)))
+  ([klass raw]
+   (assoc (transform-object raw)
+          :class-name
+          klass)))
+
+(defmethod transform-map "Pointer" [x]
+  (delayed-ptr x))
+
+(defmethod transform-map "Date" [x]
+  (tf/parse (:iso x)))
+
+(defmethod transform-map "Object" [x]
+  (transform-object (dissoc x :__type)))
+
+(defmethod transform-map :default [x] x)
+
+; Querying
 
 (def ^:dynamic *query-window* 100)
 
@@ -52,7 +77,7 @@
 (defn- get-query [klass auth {:keys [order] :as q}]
   (->> (GET ["classes" klass] auth q)
        :results
-       (map #(result->obj klass %))))
+       (map #(transform-object klass %))))
 
 (defn- load-query [klass auth {:keys [skip limit] :as q}]
   ; Auth is passed so that a query can be realized
@@ -73,23 +98,15 @@
 
 (defn ptr
   "Creates a pointer to an object"
-  ([class-name object-id]
-   {:__type "Pointer"
-    :class-name class-name
-    :object-id object-id})
-  ([{:keys [class-name object-id]}]
-   (ptr class-name object-id)))
+  [class-name object-id]
+  {:__type "Pointer"
+   :class-name class-name
+   :object-id object-id})
 
 (defn ptrs
-  "Creates pointers"
-  ([objs]
-   (map ptr objs))
-  ([klass ids]
-   (map #(ptr klass %) ids)))
-
-(defn date [s]
-  {:__type "Date"
-   :iso s})
+  "Creates pointers to objects"
+  [klass ids]
+  (map #(ptr klass %) ids))
 
 (definline id [obj] `(:object-id ~obj))
 
@@ -133,7 +150,7 @@
 (defn retrieve
   "Retrieves an object by ID from Parse"
   [klass id]
-  (result->obj
+  (transform-object
     klass
     (GET ["classes" klass id] *auth*)))
 
@@ -145,7 +162,7 @@
 (defn create
   "Creates item on Parse"
   ([klass obj]
-   (result->obj
+   (transform-object
      klass
      (let [ret (POST ["classes" klass]
                      *auth*
@@ -160,7 +177,9 @@
 (defn update
   "Updates object on Parse"
   ([klass id delta]
-   (PUT ["classes" klass id] *auth* delta))
+   (transform-object
+     klass
+     (PUT ["classes" klass id] *auth* delta)))
   ([{:keys [class-name object-id]} delta]
    (update class-name object-id delta)))
 

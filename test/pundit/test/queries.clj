@@ -6,71 +6,71 @@
             [pundit.comparisons :as c]))
 
 (defn- create-records [fun]
-  (pa/create Foo {:foo 999
-                  :bar "Find me"})
+  (pa/create Foo {:num 999
+                  :txt "Find me"})
   (fun))
 
 (use-fixtures :once authenticate create-records (cleaner-for Foo))
 
 (deftest where-chaining
   (let [-get #(:where (.getQuery %))
-        exact (pa/query Foo :where {:foo 123})
-        compd (pa/query Foo :where {:foo {:$lt 200}})]
+        exact (pa/query Foo :where {:num 123})
+        compd (pa/query Foo :where {:num {:$lt 200}})]
     ; Verifying if `a` and `b` have the same query
     (are [a b] (= (-get a) (-get b))
          ; Adding the same key to an already exact query on a key: no effect
          exact
-         (q/where exact {:foo {:$gt 100}})
+         (q/where exact {:num {:$gt 100}})
          ; Updating a comparison shall work
-         (q/where compd {:foo {:$lt 300}})
-         (pa/query Foo :where {:foo {:$lt 300}})
+         (q/where compd {:num {:$lt 300}})
+         (pa/query Foo :where {:num {:$lt 300}})
          ; Adding another comparison: AND
-         (q/where compd {:foo {:$gt 100}})
-         (pa/query Foo :where {:foo {:$gt 100 :$lt 200}}))
+         (q/where compd {:num {:$gt 100}})
+         (pa/query Foo :where {:num {:$gt 100 :$lt 200}}))
     ; Verifying if the keys in the where query match our expectation
     (are [expected q] (= expected (-> q -get keys set))
          ; Adding a completely different key: AND
-         #{:foo :bar} (q/where exact {:bar "Lol"})
-         #{:foo :bar} (q/where compd {:bar "Hello"})
+         #{:num :txt} (q/where exact {:txt "Lol"})
+         #{:num :txt} (q/where compd {:txt "Hello"})
          ; Forced where: complete takeover
-         #{:bar} (q/where! exact {:bar "Lol"})
-         #{:bar} (q/where! compd {:bar "Hello"}))))
+         #{:txt} (q/where! exact {:txt "Lol"})
+         #{:txt} (q/where! compd {:txt "Hello"}))))
 
 (deftest order-chaining
   (let [-get #(:order (.getQuery %))
-        scalar (pa/query Foo :order :foo)
-        vektor (pa/query Foo :order [:foo])]
+        scalar (pa/query Foo :order :num)
+        vektor (pa/query Foo :order [:num])]
     ; In every combination (adding scalar to scalar, scalar to vector, etc.)
     ; the result should be the same.
-    (are [q ord] (= #{:foo :bar} (-> q (q/order ord) -get set))
-         scalar :bar
-         scalar [:bar]
-         vektor :bar
-         vektor [:bar])
+    (are [q ord] (= #{:num :txt} (-> q (q/order ord) -get set))
+         scalar :txt
+         scalar [:txt]
+         vektor :txt
+         vektor [:txt])
     ; Forced order: complete takeover
     (are [q ord] (= ord (-> q (q/order! ord) -get))
-         scalar :bar
-         scalar [:bar]
-         vektor :bar
-         vektor [:bar])))
+         scalar :txt
+         scalar [:txt]
+         vektor :txt
+         vektor [:txt])))
 
 (deftest include-chaining
   (let [-get #(:include (.getQuery %))
-        scalar (pa/query Foo :include :foo)
-        vektor (pa/query Foo :include [:foo])]
+        scalar (pa/query Foo :include :num)
+        vektor (pa/query Foo :include [:num])]
     ; In every combination (adding scalar to scalar, scalar to vector, etc.)
     ; the result should be the same.
-    (are [q ord] (= #{:foo :bar} (-> q (q/include ord) -get set))
-         scalar :bar
-         scalar [:bar]
-         vektor :bar
-         vektor [:bar])))
+    (are [q ord] (= #{:num :txt} (-> q (q/include ord) -get set))
+         scalar :txt
+         scalar [:txt]
+         vektor :txt
+         vektor [:txt])))
 
 (deftest equivalence
   (are [kw fun value] (= (.getQuery (pa/query Foo kw value))
                          (.getQuery (fun (pa/query Foo) value)))
-       :include q/include :bar
-       :keys    q/only    :baz
+       :include q/include :txt
+       :keys    q/only    :arr
        :limit   q/limit   10
        :order   q/order   :created-at
        :skip    q/skip    10))
@@ -78,12 +78,12 @@
 (deftest top-level-chaining
   (is (= #{:include :limit :keys :order :skip :where}
          (-> (pa/query Foo)
-             (q/include :bar)
+             (q/include :txt)
              (q/limit 10)
-             (q/only :baz)
+             (q/only :arr)
              (q/order :created-at)
              (q/skip 10)
-             (q/where {:foo 123})
+             (q/where {:num 123})
              .getQuery
              keys
              set))))

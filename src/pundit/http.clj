@@ -1,6 +1,9 @@
 (ns pundit.http
-  (:import (clojure.lang Associative Sequential Keyword))
+  (:import (clojure.lang Associative Sequential Keyword)
+           (java.util Calendar Date)
+           (org.joda.time DateTime))
   (:require [pundit.string :refer :all]
+            [clj-time.format :as tf]
             [clj-http.client :as http]
             [clojure.string :as s]
             [clojure.data.json :as js]))
@@ -29,10 +32,36 @@
 
 ; JSON
 
+(def ^:dynamic *date-formatter*
+  (tf/formatters :date-time))
+
+(defmulti ^:private json-value #(type %2))
+
+(defmethod json-value DateTime [k v]
+  {:__type "Date" :iso (tf/unparse *date-formatter* v)})
+
+(defmethod json-value Calendar [k v]
+  (json-value k (DateTime. v)))
+
+(defmethod json-value Date [k v]
+  (json-value k (DateTime. v)))
+
+(defmethod json-value Associative [k value]
+  (if (and (not (:__type value))
+           (:class-name value)
+           (:object-id value))
+    (assoc
+      (select-keys value [:class-name :object-id])
+      :__type "Pointer")
+    value))
+
+(defmethod json-value :default [k v] v)
+
 (definline ^:private to-json [obj]
   `(js/write-str
-    ~obj
-    :key-fn #(half-camelize (name %))))
+     ~obj
+     :key-fn #(half-camelize (name %))
+     :value-fn json-value))
 
 ; Data transformation for queries
 

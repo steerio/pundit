@@ -1,6 +1,5 @@
 (ns pundit.comparisons
-  (:require [pundit.api :refer [date ptr]]
-            [pundit.string :refer :all]))
+  (:require [pundit.string :refer :all]))
 
 (defmacro ^:private defcomp [operator]
   `(def ^:const ~(symbol (str operator))
@@ -27,17 +26,17 @@
 
 (defn related-to [obj k]
   {:$related-to
-   {:object (ptr obj)
+   {:object obj
     :key k}})
 
-(defn earlier-than [s]
-  {:$lt (date s)})
+(defn earlier-than [d]
+  {:$lt d})
 
-(defn later-than [s]
-  {:$gt (date s)})
+(defn later-than [d]
+  {:$gt d})
 
-(defn older-than [s]
-  {:created-at (earlier-than s)})
+(defn older-than [d]
+  {:created-at (earlier-than d)})
 
-(defn newer-than [s]
-  {:created-at (later-than s)})
+(defn newer-than [d]
+  {:created-at (later-than d)})
