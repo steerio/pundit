@@ -1,7 +1,8 @@
 (ns pundit.http
-  (:import (clojure.lang Associative Sequential Keyword)
-           (java.util Calendar Date)
-           (org.joda.time DateTime))
+  (:import (clojure.lang IPersistentMap IPersistentSet Keyword Sequential)
+           (java.util Calendar Collection Date)
+           (org.joda.time DateTime)
+           (org.joda.time.base AbstractDateTime))
   (:require [pundit.string :refer :all]
             [clj-time.format :as tf]
             [clj-http.client :as http]
@@ -37,7 +38,7 @@
 
 (defmulti ^:private json-value #(type %2))
 
-(defmethod json-value DateTime [k v]
+(defmethod json-value AbstractDateTime [k v]
   {:__type "Date" :iso (tf/unparse *date-formatter* v)})
 
 (defmethod json-value Calendar [k v]
@@ -46,7 +47,7 @@
 (defmethod json-value Date [k v]
   (json-value k (DateTime. v)))
 
-(defmethod json-value Associative [k value]
+(defmethod json-value IPersistentMap [k value]
   (if (and (not (:__type value))
            (:class-name value)
            (:object-id value))
@@ -54,6 +55,9 @@
       (select-keys value [:class-name :object-id])
       :__type "Pointer")
     value))
+
+(defmethod json-value Collection [k value]
+  (map #(json-value k %) value))
 
 (defmethod json-value :default [k v] v)
 
@@ -67,10 +71,10 @@
 
 (defmulti ^:private to-query type)
 
-(defmethod to-query Sequential [value]
+(defmethod to-query Collection [value]
   (s/join \, (map to-query value)))
 
-(defmethod to-query Associative [value]
+(defmethod to-query IPersistentMap [value]
   (to-json value))
 
 (defmethod to-query Keyword [value]
@@ -78,8 +82,6 @@
 
 (defmethod to-query :default [value]
   value)
-
-(prefer-method to-query Sequential Associative)
 
 (defn- map->query [m]
   (reduce
