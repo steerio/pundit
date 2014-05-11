@@ -7,10 +7,11 @@
 ; Private stuff
 
 (def ^:private props
-  (into {} (doto (java.util.Properties.)
-             (.load (-> (Thread/currentThread)
-                        .getContextClassLoader
-                        (.getResourceAsStream "test.properties"))))))
+  (if-let [props (-> (Thread/currentThread)
+                   .getContextClassLoader
+                   (.getResourceAsStream "test.properties"))]
+    (into {} (doto (java.util.Properties.) (.load props)))
+    (throw (Exception. "Properties file not found, see README"))))
 
 (def ^:private auth
   [(props "parse.app") (props "parse.key")])
