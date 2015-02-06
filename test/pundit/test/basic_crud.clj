@@ -13,7 +13,7 @@
 (use-fixtures :once authenticate (cleaner-for Foo))
 
 (deftest creating-retrieving
-  (let [created (pa/create Foo example)
+  (let [created (pa/create! Foo example)
         retrieved (pa/retrieve Foo (pa/id created))]
     (is (= created retrieved))
     (is (= example
@@ -28,10 +28,10 @@
                    (pa/retrieve Foo "x"))))
 
 (deftest updating
-  (let [created (pa/create Foo example)
-        up1 (pa/update created
+  (let [created (pa/create! Foo example)
+        up1 (pa/update! created
                        {:txt "Different text"})
-        up2 (pa/update (:class-name created) (pa/id created)
+        up2 (pa/update! (:class-name created) (pa/id created)
                        {:num 234})
         proof (pa/retrieve Foo (pa/id created))]
     (isnt (= (:updated-at up1)
@@ -46,8 +46,8 @@
     (is (= (:num proof) 234))))
 
 (deftest destroying
-  (let [obj (pa/create Foo {:txt "Delete me"})
+  (let [obj (pa/create! Foo {:txt "Delete me"})
         id (pa/id obj)]
     (isnt (http-error? 404 (pa/retrieve Foo id)))
-    (pa/delete obj)
+    (pa/delete! obj)
     (is (http-error? 404 (pa/retrieve Foo id)))))

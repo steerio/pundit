@@ -39,8 +39,8 @@
 (defn cleaner-for [klass]
   (fn [fun]
     (fun)
-    (doseq [obj (pa/query klass :where test-id)]
-      (pa/delete obj))))
+    (pa/execute!
+      (map pa/delete (pa/query klass :where test-id)))))
 
 (defmacro http-error? [status & body]
   `(try

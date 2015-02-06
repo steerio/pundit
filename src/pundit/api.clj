@@ -98,10 +98,12 @@
 
 (defn ptr
   "Creates a pointer to an object"
-  [class-name object-id]
+  ([class-name object-id]
   {:__type "Pointer"
    :class-name class-name
    :object-id object-id})
+  ([{:keys [class-name object-id]}]
+   (ptr class-name object-id)))
 
 (defn ptrs
   "Creates pointers to objects"
@@ -159,38 +161,85 @@
 
 ; Creating an object
 
+(defn- transform-created [klass obj res]
+  (transform-object
+    klass
+    (-> obj
+        (merge res)
+        (assoc :updated-at (:created-at res)))))
+
 (defn create
-  "Creates item on Parse"
+  "Returns an executable create operation"
   ([klass obj]
-   (transform-object
-     klass
-     (let [ret (POST ["classes" klass]
-                     *auth*
-                     (dissoc obj :class-name :object-id))]
-       (-> obj
-           (merge ret)
-           (assoc :updated-at (:created-at ret))))))
-  ([obj] (create (:class-name obj) obj)))
+   (vector (POST ["classes" klass]
+                 (dissoc obj :class-name :object-id))
+           #(transform-created klass obj %)))
+  ([obj]
+   (create (:class-name obj) obj)))
+
+(defn create!
+  "Creates item on Parse right away"
+  ([klass obj]
+   (transform-created
+     klass obj
+     (POST! ["classes" klass]
+            *auth*
+            (dissoc obj :class-name :object-id))))
+  ([obj] (create! (:class-name obj) obj)))
 
 ; Updating an object
 
 (defn update
-  "Updates object on Parse"
+  "Returns an executable update operation"
   ([klass id delta]
-   (transform-object
-     klass
-     (PUT ["classes" klass id] *auth* delta)))
+   (vector (PUT ["classes" klass id] delta)
+           transform-object))
   ([{:keys [class-name object-id]} delta]
    (update class-name object-id delta)))
 
+(defn update!
+  "Updates object on Parse right away"
+  ([klass id delta]
+   (transform-object
+     (PUT! ["classes" klass id] *auth* delta)))
+  ([{:keys [class-name object-id]} delta]
+   (update! class-name object-id delta)))
+
 ; Deleting an object
 
-(defn delete
-  "Deletes item on Parse"
+(let [success (constantly true)]
+  (defn delete
+    "Returns an executable delete operation"
+    ([klass object-id]
+     (vector (DELETE ["classes" klass object-id])
+             success))
+    ([{:keys [class-name object-id]}]
+     (delete class-name object-id))))
+
+(defn delete!
+  "Deletes item on Parse right away"
   ([klass object-id]
-   (DELETE ["classes" klass object-id] *auth*))
+   (DELETE! ["classes" klass object-id] *auth*))
   ([{:keys [class-name object-id]}]
-   (delete class-name object-id)))
+   (delete! class-name object-id)))
+
+; Execute batched requests
+
+(defn execute!
+  "Executes operations, does not retain head, returns nil."
+  [ops]
+  (dorun (batch! *auth* (map first ops))))
+
+(defn execute-map!
+  "Executes operations, returns results in a lazy sequence."
+  [ops]
+  (map
+    (fn [{:keys [success] :as res} fun]
+      (if success
+        {:success (fun success)}
+        res))
+    (batch! *auth* (map first ops))
+    (map second ops)))
 
 ; Calling a cloud function
 
@@ -198,7 +247,7 @@
   "Calls cloud function on Parse"
   ([cloud-fn params]
    (:result
-     (POST ["functions" cloud-fn]
+     (POST! ["functions" cloud-fn]
            *auth* params)))
   ([cloud-fn]
    (call cloud-fn {})))

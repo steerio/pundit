@@ -6,8 +6,8 @@
             [pundit.api :as pa]))
 
 (defn- create-records [fun]
-  (let [foo (pa/create Foo (assoc test-id :time (t/now)))]
-    (pa/create Bar (assoc test-id :foo foo)))
+  (let [foo (pa/create! Foo (assoc test-id :time (t/now)))]
+    (pa/create! Bar (assoc test-id :foo foo)))
   (fun))
 
 (use-fixtures :once
@@ -21,7 +21,7 @@
         t (t/now)]
     (is (instance? DateTime (:time foo)))
     (is (instance? DateTime (:created-at foo)))
-    (pa/update foo {:time t})
+    (pa/update! foo {:time t})
     (is (= t (:time (pa/reload foo))))))
 
 (deftest pointers

@@ -23,22 +23,43 @@ You can choose between "permanent" authentication and an auth binding:
 ## Basic CRUD operations
 
 ```clojure
-user=> (pa/create "Klass" {:foo 123 :bar "Hello"})
+user=> (pa/create! "Klass" {:foo 123 :bar "Hello"})
 {:bar "Hello", :foo 123, :created-at #<DateTime 2014-02-19T17:42:12.947Z>,
 :object-id "ZwyZBrgKgU", :updated-at #<DateTime 2014-02-19T17:42:12.947Z>,
 :class-name "Klass"}
 
-user=> (pa/update obj {:bar "Namaste"})
+user=> (pa/update! obj {:bar "Namaste"})
 {:updated-at #<DateTime 2014-02-19T17:43:07.221Z>}
 
-user=> (pa/update "Klass" "ZwyZBrgKgU" {:bar "Namaste"})
+user=> (pa/update! "Klass" "ZwyZBrgKgU" {:bar "Namaste"})
 {:updated-at #<DateTime 2014-02-19T17:44:22.453Z>}
 
-user=> (pa/delete obj)
+user=> (pa/delete! obj)
 {}
 
-user=> (pa/delete "Klass" "ZwyZBrgKgU")
+user=> (pa/delete! "Klass" "ZwyZBrgKgU")
 {}
+```
+
+## Batch operations
+
+If you need the results, use `pundit.api/execute-map!`:
+
+```clojure
+(def objs
+  (pa/execute-map!
+    (map #(pa/create "Foo" {:num %}) (range 10)))
+```
+
+If you can throw away results, you can use `execute!` and never retain the
+head:
+
+```clojure
+(pa/execute!
+  (map #(pa/update % {:$inc {:num 1}}) objs))
+
+(pa/execute!
+  (map pa/delete (pa/query "Foo" :where { :owner someone })))
 ```
 
 ## Querying
@@ -137,7 +158,7 @@ Writing objects with pointer fields does not require explicitly creating
 pointers. You can simply use a Parse object as the value.
 
 ```clojure
-(pa/update obj {:foo (pa/retrieve "Klass" "bgQwXqBtEu")})
+(pa/update! obj {:foo (pa/retrieve "Klass" "bgQwXqBtEu")})
 ```
 
 ## Calling cloud functions

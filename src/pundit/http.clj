@@ -2,7 +2,7 @@
   (:import (clojure.lang IPersistentMap IPersistentSet Keyword Sequential)
            (java.util Calendar Collection Date)
            (org.joda.time DateTime)
-           (org.joda.time.base AbstractDateTime))
+           (org.joda.time.base AbstractDateTime BaseLocal))
   (:require [pundit.string :refer :all]
             [clj-time.format :as tf]
             [clj-http.client :as http]
@@ -10,7 +10,12 @@
             [clojure.data.json :as js]))
 
 (def ^:private ^:dynamic *base*
-  "https://api.parse.com/1/")
+  "https://api.parse.com")
+
+(def ^:private ^:dynamic *root*
+  "/1/")
+
+(def ^:dynamic *batch-size* 50)
 
 (def ^:private headers
   {"Accept" "application/json"
@@ -21,15 +26,15 @@
 ; Paths
 
 (defprotocol Path
-  (path-string [this]))
+  (parse-path [this]))
 
 (extend-protocol Path
   Sequential
-  (path-string [this] (s/join \/ this))
+  (parse-path [this] (str *root* (s/join \/ this)))
   String
-  (path-string [this] this)
+  (parse-path [this] (str *root* this))
   Object
-  (path-string [this] (str this)))
+  (parse-path [this] (str *root* this)))
 
 ; JSON
 
@@ -40,6 +45,9 @@
 
 (defmethod json-value AbstractDateTime [k v]
   {:__type "Date" :iso (tf/unparse *date-formatter* v)})
+
+(defmethod json-value BaseLocal [k v]
+  {:__type "Date" :iso (str (tf/unparse-local *date-formatter* v) "Z")})
 
 (defmethod json-value Calendar [k v]
   (json-value k (DateTime. v)))
@@ -93,7 +101,7 @@
 
 (defn- request [uri auth req-map]
   (-> req-map
-      (merge {:url (str *base* (path-string uri))
+      (merge {:url (str *base* (parse-path uri))
               :headers headers
               :basic-auth auth})
       http/request
@@ -116,11 +124,34 @@
   ([uri auth]
    (request uri auth {:method :get})))
 
-(defn POST [uri auth data]
+(defn POST! [uri auth data]
   (post-like :post uri auth data))
 
-(defn PUT [uri auth data]
+(defn PUT! [uri auth data]
   (post-like :put uri auth data))
 
-(defn DELETE [uri auth]
+(defn DELETE! [uri auth]
   (request uri auth {:method :delete}))
+
+; Operations
+
+(defn POST [uri data]
+  {:method "POST"
+   :path (parse-path uri)
+   :body data})
+
+(defn PUT [uri data]
+  {:method "PUT"
+   :path (parse-path uri)
+   :body data})
+
+(defn DELETE [uri]
+  {:method "DELETE"
+   :path (parse-path uri)})
+
+; Execution
+
+(defn batch! [auth ops]
+  (mapcat
+    #(POST! "batch" auth {:requests %})
+    (partition-all *batch-size* ops)))
