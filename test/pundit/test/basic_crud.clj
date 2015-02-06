@@ -4,9 +4,11 @@
             [pundit.api :as pa]))
 
 (def ^:private example
-  {:num 123
-   :txt "Some text"
-   :arr ["Hello" 12.34] })
+  (merge
+    test-id
+    {:num 123
+     :txt "Some text"
+     :arr ["Hello" 12.34] }))
 
 (use-fixtures :once authenticate (cleaner-for Foo))
 
@@ -15,8 +17,8 @@
         retrieved (pa/retrieve Foo (pa/id created))]
     (is (= created retrieved))
     (is (= example
-           (select-keys retrieved [:num :txt :arr])
-           (select-keys created [:num :txt :arr])))
+           (select-keys retrieved [:num :txt :arr :test])
+           (select-keys created [:num :txt :arr :test])))
     (is (:created-at created))
     (is (= (:created-at created)
            (:updated-at created)))))

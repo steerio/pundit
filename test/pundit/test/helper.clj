@@ -4,6 +4,12 @@
            [pundit.api :as pa]
            [pundit.comparisons :refer :all]))
 
+(def test-id
+  {:test
+   (-> (java.util.Date.)
+       .getTime
+       str)})
+
 ; Private stuff
 
 (def ^:private props
@@ -32,10 +38,9 @@
 
 (defn cleaner-for [klass]
   (fn [fun]
-    (let [ts (:created-at (pa/find-one klass :order :-created-at))]
-      (fun)
-      (doseq [obj (pa/query klass :where (newer-than ts))]
-        (pa/delete obj)))))
+    (fun)
+    (doseq [obj (pa/query klass :where test-id)]
+      (pa/delete obj))))
 
 (defmacro http-error? [status & body]
   `(try
