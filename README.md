@@ -180,12 +180,10 @@ The latter is included in `.gitignore` for safety.
 
 ## TODO
 
-* Batched requests
 * More documentation
 * Improved test coverage
+* Session authentication
 
 ## License
 
-Copyright © 2013-2014 Roland Venesz
-
-Distributed under the Eclipse Public License, the same as Clojure.
+The library is distributed under the Eclipse Public License, the same as Clojure.
