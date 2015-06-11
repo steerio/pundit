@@ -12,7 +12,7 @@
 
 ; Private stuff
 
-(def ^:private props
+(def props
   (if-let [props (-> (Thread/currentThread)
                    .getContextClassLoader
                    (.getResourceAsStream "test.properties"))]
@@ -20,7 +20,9 @@
     (throw (Exception. "Properties file not found, see README"))))
 
 (def ^:private auth
-  [(props "parse.app") (props "parse.key")])
+  {:app (props "parse.app")
+   :api-key (props "parse.api-key")
+   :master-key (props "parse.master-key")})
 
 ; Shorthand class names
 

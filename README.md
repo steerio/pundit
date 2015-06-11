@@ -12,12 +12,37 @@ You can choose between "permanent" authentication and an auth binding:
 ```clojure
 (require '[pundit.api :as pa])
 
-(pa/connect! [app-id app-key])
+(pa/connect! {:app "foo"
+              :api-key "bar"
+              :master-key "baz"})
 
 ; OR
 
-(pa/with-auth [app-id app-key]
+(pa/with-auth same-map-as-above
   (do-things-here))
+```
+
+You can switch to the master key like this:
+
+```clojure
+(pa/with-master
+  (pa/find-all "Foo"))
+```
+
+You can authenticate as a Parse user (and you can obviously save the token for
+later, too):
+
+```clojure
+(pa/with-token (pa/login email password)
+  (pa/find-all "Foo")
+```
+
+This form will log your user in, and log them out in a `finally` clause once
+the body is completed:
+
+```clojure
+(pa/with-login ["foo@bar.com" "abc123"]
+  (pa/find-all "Foo"))
 ```
 
 ## Basic CRUD operations
@@ -186,4 +211,5 @@ The latter is included in `.gitignore` for safety.
 
 ## License
 
-The library is distributed under the Eclipse Public License, the same as Clojure.
+The library is distributed under the Eclipse Public License, the same as
+Clojure.

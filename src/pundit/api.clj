@@ -5,13 +5,27 @@
             [pundit.http :refer :all])
   (:import (clojure.lang IPersistentMap) (pundit Query)))
 
-(def ^:dynamic *auth* [])
+(def ^:dynamic *auth* {})
 
 (defn connect! [auth]
   (def ^:dynamic *auth* auth))
 
 (defmacro with-auth [auth & body]
   `(binding [*auth* ~auth] ~@body))
+
+(defmacro with-master [& body]
+  `(binding [*auth* (assoc *auth* :use-master true)]
+     ~@body))
+
+(defmacro with-token [token & body]
+  `(binding [*auth* (assoc *auth* :token ~token)]
+     ~@body))
+
+(defmacro with-login [[email password] & body]
+  `(with-token (login ~email ~password)
+     (try
+       ~@body
+       (finally (pa/logout)))))
 
 ; Pointer
 
@@ -62,6 +76,20 @@
   (transform-object (dissoc x :__type)))
 
 (defmethod transform-map :default [x] x)
+
+; User auth
+
+(defn login [user pwd]
+  (:session-token
+    (GET "login"
+         (dissoc *auth* :token)
+         {:username user :password pwd})))
+
+(defn logout! []
+  (POST! "logout" *auth* {}))
+
+(defn whoami []
+  (GET "users/me" *auth*))
 
 ; Querying
 

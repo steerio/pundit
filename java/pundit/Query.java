@@ -6,17 +6,17 @@ import java.util.*;
 public class Query implements Seqable {
   private String parseClass;
   private IFn loader;
-  private IPersistentVector auth;
+  private IPersistentMap auth;
   private IPersistentMap query;
 
-  public Query(String parseClass, IFn loader, IPersistentVector auth, IPersistentMap query) {
+  public Query(String parseClass, IFn loader, IPersistentMap auth, IPersistentMap query) {
     this.parseClass = parseClass;
     this.loader = loader;
     this.auth = auth;
     this.query = (query == null ? PersistentArrayMap.EMPTY : query);
   }
 
-  public Query(String parseClass, IFn loader, IPersistentVector auth) {
+  public Query(String parseClass, IFn loader, IPersistentMap auth) {
     this.parseClass = parseClass;
     this.loader = loader;
     this.auth = auth;
@@ -24,7 +24,7 @@ public class Query implements Seqable {
   }
 
   public Query add(IPersistentMap more, IFn merge) {
-    // We pass the auth vector so that a query can be realized
+    // We pass the auth map so that a query can be realized
     // outside of a dynamic binding.
     return new Query(
       parseClass,

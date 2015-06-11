@@ -99,11 +99,20 @@
 
 ; Requests
 
+(defn auth-headers [{:keys [app api-key master-key use-master token]}]
+  (let [h (transient headers)]
+    (assoc! h "X-Parse-Application-Id" app)
+    (if use-master
+      (assoc! h "X-Parse-Master-Key" master-key)
+      (assoc! h "X-Parse-REST-API-Key" api-key))
+    (if token
+      (assoc! h "X-Parse-Session-Token" token))
+    (persistent! h)))
+
 (defn- request [uri auth req-map]
   (-> req-map
       (merge {:url (str *base* (parse-path uri))
-              :headers headers
-              :basic-auth auth})
+              :headers (auth-headers auth)})
       http/request
       :body
       (js/read-str :key-fn #(keyword (kebabize %)))))
