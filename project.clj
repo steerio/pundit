@@ -9,4 +9,4 @@
                  [org.clojure/data.json "0.2.6"]
                  [delayed-map "1.0.0"]
                  [clj-http "1.1.2"]
-                 [clj-time "0.7.0"]])
+                 [clj-time "0.9.0"]])
