@@ -79,16 +79,22 @@
 
 ; User auth
 
-(defn login [user pwd]
+(defn login
+  "Authenticates `user` with `pwd`, returns a session token."
+  [user pwd]
   (:session-token
     (GET "login"
          (dissoc *auth* :token)
          {:username user :password pwd})))
 
-(defn logout! []
+(defn logout!
+  "Logs out the currently logged in user."
+  []
   (POST! "logout" *auth* {}))
 
-(defn whoami []
+(defn whoami
+  "Returns the currently logged in user."
+  []
   (GET "users/me" *auth*))
 
 ; Querying
