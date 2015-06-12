@@ -155,7 +155,7 @@
   "Shorthand function to eagerly return the first hit of a query."
   [klass & {:as q}]
   (first
-    (load-query klass *auth* (assoc q :limit 1))))
+    (get-query klass *auth* (assoc q :limit 1))))
 
 (defn find-all
   "Shorthand function to eagerly retrieve ALL hits of a query."
