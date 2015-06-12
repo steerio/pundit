@@ -203,12 +203,6 @@ Before you run tests, please copy `resources/test.properties.tmpl` to
 
 The latter is included in `.gitignore` for safety.
 
-## TODO
-
-* More documentation
-* Improved test coverage
-* Session authentication
-
 ## License
 
 The library is distributed under the Eclipse Public License, the same as
