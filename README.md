@@ -34,7 +34,7 @@ later, too):
 
 ```clojure
 (pa/with-token (pa/login email password)
-  (pa/find-all "Foo")
+  (pa/find-all "Foo"))
 ```
 
 This form will log your user in, and log them out in a `finally` clause once
