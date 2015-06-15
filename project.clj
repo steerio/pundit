@@ -9,4 +9,12 @@
                  [org.clojure/data.json "0.2.6"]
                  [delayed-map "1.0.0"]
                  [clj-http "1.1.2"]
-                 [clj-time "0.9.0"]])
+                 [clj-time "0.9.0"]]
+  :profiles {:dev {:dependencies [[environ "1.0.0"]]}} 
+  :repl-options {:init
+                 (do
+                   (use 'pundit.api 'environ.core)
+                   (if-let [conn (:pundit env)] (connect! conn)))
+                 :welcome
+                 (if-let [{app :app} pundit.api/*auth*]
+                   (println "Pundit: authenticated for app" app))})
