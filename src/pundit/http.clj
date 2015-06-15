@@ -109,11 +109,12 @@
       (assoc! h "X-Parse-Session-Token" token))
     (persistent! h)))
 
-(defn- request [uri auth req-map]
+(defn request [uri auth {user-headers :headers :as req-map}]
   (-> req-map
       (merge {:url (str *base* (parse-path uri))
               :headers (merge headers
-                              (auth-headers auth))})
+                              (auth-headers auth)
+                              user-headers)})
       http/request
       :body
       (js/read-str :key-fn #(keyword (kebabize %)))))

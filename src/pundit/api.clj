@@ -84,12 +84,22 @@
 ; User auth
 
 (defn login
-  "Authenticates `user` with `pwd`, returns a session token."
+  "Authenticates `user` with `pwd`, returns a revokable session token."
+  [user pwd]
+  (:session-token
+    (request "login"
+             (dissoc *auth* :token)
+             {:method :get
+              :query-params {:username user :password pwd}
+              :headers {"X-Parse-Revocable-Session" 1}})))
+
+(defn login-non-revokable
+  "Authenticates `user` with `pwd`, returns a non-revokable session token."
   [user pwd]
   (:session-token
     (GET "login"
-         (dissoc *auth* :token)
-         {:username user :password pwd})))
+             (dissoc *auth* :token)
+             {:username user :password pwd})))
 
 (defn logout!
   "Logs out the currently logged in user."
