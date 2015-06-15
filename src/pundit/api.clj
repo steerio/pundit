@@ -13,8 +13,12 @@
 (defmacro with-auth [auth & body]
   `(binding [*auth* ~auth] ~@body))
 
-(defmacro with-master [& body]
+(defmacro with-master-key [& body]
   `(binding [*auth* (assoc *auth* :use-master true)]
+     ~@body))
+
+(defmacro with-rest-key [& body]
+  `(binding [*auth* (assoc *auth* :use-master false)]
      ~@body))
 
 (defmacro with-token [token & body]
