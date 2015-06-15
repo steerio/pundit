@@ -29,7 +29,7 @@
   `(with-token (login ~email ~password)
      (try
        ~@body
-       (finally (pa/logout)))))
+       (finally (logout!)))))
 
 ; Pointer
 
