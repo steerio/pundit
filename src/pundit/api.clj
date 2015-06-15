@@ -184,14 +184,24 @@
 ; Retrieving one object
 
 (defn retrieve
-  "Retrieves an object by ID from Parse"
-  [klass id]
-  (transform-object
-    klass
-    (GET ["classes" klass id] *auth*)))
+  "Retrieves an object by ID from Parse."
+  ([klass id]
+   (transform-object
+     klass
+     (GET ["classes" klass id] *auth*)))
+  ([klass id & {:as more}]
+   (apply
+     find-one
+     klass
+     (apply concat
+            (update-in more [:where] assoc :object-id id)))))
 
-(defn reload [{:keys [class-name object-id]}]
+(defn reload
+  "Reloads object from Parse."
+  ([{:keys [class-name object-id]}]
   (retrieve class-name object-id))
+  ([{:keys [class-name object-id]} & more]
+  (apply retrieve class-name object-id more)))
 
 ; Creating an object
 
