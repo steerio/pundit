@@ -7,8 +7,11 @@
 
 (def ^:dynamic *auth* {})
 
-(defn connect! [auth]
-  (def ^:dynamic *auth* auth))
+(defn connect! [{:keys [base] :as auth}]
+  (def ^:dynamic *auth*
+    (if (= (last base) \/)
+      auth
+      (assoc auth :base (str base \/)))))
 
 (defmacro with-auth [auth & body]
   `(binding [*auth* ~auth] ~@body))

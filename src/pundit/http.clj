@@ -9,12 +9,6 @@
             [clojure.string :as s]
             [clojure.data.json :as js]))
 
-(def ^:private ^:dynamic *base*
-  "https://api.parse.com")
-
-(def ^:private ^:dynamic *root*
-  "/1/")
-
 (def ^:dynamic *batch-size* 50)
 
 (def ^:private headers
@@ -30,11 +24,11 @@
 
 (extend-protocol Path
   Sequential
-  (parse-path [this] (str *root* (s/join \/ this)))
+  (parse-path [this] (s/join \/ this))
   String
-  (parse-path [this] (str *root* this))
+  (parse-path [this] this)
   Object
-  (parse-path [this] (str *root* this)))
+  (parse-path [this] (str this)))
 
 ; JSON
 
@@ -104,14 +98,14 @@
     (assoc! h "X-Parse-Application-Id" app)
     (if use-master
       (assoc! h "X-Parse-Master-Key" master-key)
-      (assoc! h "X-Parse-REST-API-Key" api-key))
+      (if api-key (assoc! h "X-Parse-REST-API-Key" api-key)))
     (if token
       (assoc! h "X-Parse-Session-Token" token))
     (persistent! h)))
 
 (defn request [uri auth {user-headers :headers :as req-map}]
   (-> req-map
-      (merge {:url (str *base* (parse-path uri))
+      (merge {:url (str (:base auth) (parse-path uri))
               :headers (merge headers
                               (auth-headers auth)
                               user-headers)})
